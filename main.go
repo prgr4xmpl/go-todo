@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go-todo/config"
 	"go-todo/models"
 	"go-todo/routers"
@@ -15,15 +14,15 @@ func main() {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		fmt.Printf("Could not open database: %v\n", err)
-		return
+		config.ErrorLogger.Fatalf("Failed to connect to database: %v\n", err)
 	}
 	config.DB = db
-	config.DB.AutoMigrate(&models.Task{})
+	if err := config.DB.AutoMigrate(&models.Task{}); err != nil {
+		config.ErrorLogger.Fatalf("Could not migrate task: %v\n", err)
+	}
 
 	router := routers.SetupRouter()
-	if err := router.Run(); err != nil {
-		fmt.Printf("Couldn't setup router: %v\n", err)
-		return
+	if err := router.Run("localhost:8080"); err != nil {
+		config.ErrorLogger.Fatalf("Couldn't setup router: %v\n", err)
 	}
 }
